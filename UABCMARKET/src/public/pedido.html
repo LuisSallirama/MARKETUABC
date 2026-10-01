@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmación de Compra - UABC Marketplace</title>
+    <!-- Librería externa ligera para generar códigos QR -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f6f9; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; max-width: 400px; width: 100%; }
+        h2 { color: #00723f; }
+        #qrcode { display: flex; justify-content: center; margin: 20px 0; }
+        .estado { font-weight: bold; color: #28a745; margin-top: 15px; }
+        .btn { width: 100%; padding: 10px; background: #00723f; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Código de Entrega UABC</h2>
+        <p>Muestra este código QR al vendedor al recibir tu producto para confirmar la transacción.</p>
+        
+        <div id="qrcode"></div>
+        <p id="codigoTexto" style="font-size: 12px; color: #666;"></p>
+
+        <button class="btn" onclick="simularEscaneoVendedor()">Simular Escaneo del Vendedor</button>
+        <div id="mensajeEstado" class="estado"></div>
+    </div>
+
+    <script>
+        // Token QR de prueba generado al solicitar la compra
+        const codigoQR = new URLSearchParams(window.location.search).get('qr') || 'UABC-QR-DEMO-12345';
+        document.getElementById('codigoTexto').innerText = codigoQR;
+
+        // Generar la imagen del QR dinámicamente
+        new QRCode(document.getElementById("qrcode"), {
+            text: codigoQR,
+            width: 180,
+            height: 180
+        });
+
+        async function simularEscaneoVendedor() {
+            const res = await fetch('/api/compras/confirmar-qr', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ codigo_qr: codigoQR })
+            });
+
+            const data = await res.json();
+            const msgDiv = document.getElementById('mensajeEstado');
+
+            if (res.ok) {
+                msgDiv.style.color = 'green';
+                msgDiv.innerText = data.mensaje;
+            } else {
+                msgDiv.style.color = 'red';
+                msgDiv.innerText = data.error;
+            }
+        }
+    </script>
+</body>
+</html>

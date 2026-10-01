@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración - UABC Marketplace</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h1 { color: #00723f; border-bottom: 2px solid #00723f; padding-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #00723f; color: white; }
+        .btn-aprobar { background-color: #28a745; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
+        .btn-rechazar { background-color: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Panel de Administración - Solicitudes UABC</h1>
+        <h3>Solicitudes de Vendedores Pendientes</h3>
+        <table id="tablaSolicitudes">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Correo UABC</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="listaSolicitudes">
+                <!-- Llenado con JS -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        async function cargarSolicitudes() {
+            const res = await fetch('/api/admin/solicitudes');
+            const solicitudes = await res.json();
+            const tbody = document.getElementById('listaSolicitudes');
+            tbody.innerHTML = '';
+
+            if (solicitudes.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4">No hay solicitudes pendientes.</td></tr>';
+                return;
+            }
+
+            solicitudes.forEach(user => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${user.id}</td>
+                        <td>${user.nombre}</td>
+                        <td>${user.email}</td>
+                        <td>
+                            <button class="btn-aprobar" onclick="responderSolicitud(${user.id}, 'aprobado')">Aprobar</button>
+                            <button class="btn-rechazar" onclick="responderSolicitud(${user.id}, 'rechazado')">Rechazar</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        async function responderSolicitud(usuario_id, decision) {
+            await fetch('/api/admin/aprobar-vendedor', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ usuario_id, decision })
+            });
+            cargarSolicitudes();
+        }
+
+        cargarSolicitudes();
+    </script>
+</body>
+</html>

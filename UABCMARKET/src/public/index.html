@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UABC Marketplace - Registro</title>
+    
+    <style>
+        /* Centra todo el contenido vertical y horizontalmente en la pantalla */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        /* Estilo de la tarjeta del formulario */
+        .card-registro {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            box-sizing: border-box;
+        }
+
+        .card-registro h2 {
+            text-align: center;
+            color: #00723f; 
+            margin-bottom: 20px;
+        }
+
+        .grupo-campo {
+            margin-bottom: 15px;
+        }
+
+        .grupo-campo label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .grupo-campo input, .grupo-campo select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+
+        .btn-registrar {
+            width: 100%;
+            padding: 12px;
+            background-color: #00723f;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-registrar:hover {
+            background-color: #00562f;
+        }
+
+        #mensaje {
+            margin-top: 15px;
+            text-align: center;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card-registro">
+        <h2>Registro de Usuario</h2>
+        
+        <form id="formRegistro">
+            <div class="grupo-campo">
+                <label for="nombre">Nombre completo:</label>
+                <input type="text" id="nombre" name="nombre" placeholder="Ej. Adrian Ramirez" required>
+            </div>
+
+            <div class="grupo-campo">
+                <label for="email">Correo UABC:</label>
+                <input 
+                    type="email" 
+                    id="email" 
+                    name="email" 
+                    placeholder="usuario@uabc.edu.mx" 
+                    pattern=".+@uabc\.edu\.mx" 
+                    title="Debes ingresar un correo institucional válido que termine en @uabc.edu.mx" 
+                    required
+                >
+            </div>
+
+            <div class="grupo-campo">
+                <label for="password">Contraseña:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+
+            <div class="grupo-campo">
+                <label for="rol">Rol:</label>
+                <select id="rol" name="rol">
+                    <option value="comprador">Comprador</option>
+                    <option value="vendedor">Vendedor</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn-registrar">Registrar</button>
+        </form>
+
+        <div id="mensaje"></div>
+    </div>
+
+    <script>
+        document.getElementById('formRegistro').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const mensajeDiv = document.getElementById('mensaje');
+            mensajeDiv.style.color = 'black';
+            mensajeDiv.innerText = 'Cargando...';
+
+            const datos = {
+                nombre: document.getElementById('nombre').value,
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                rol: document.getElementById('rol').value
+            };
+
+            try {
+                const respuesta = await fetch('/api/registro', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(datos)
+                });
+
+                const resultado = await respuesta.json();
+
+                if (respuesta.ok) {
+                    mensajeDiv.style.color = 'green';
+                    mensajeDiv.innerText = `${resultado.mensaje} (ID: ${resultado.id})`;
+                    document.getElementById('formRegistro').reset();
+                } else {
+                    mensajeDiv.style.color = 'red';
+                    mensajeDiv.innerText = resultado.error || 'Error en el servidor';
+                }
+            } catch (error) {
+                mensajeDiv.style.color = 'red';
+                mensajeDiv.innerText = 'Error de conexión con el servidor.';
+            }
+        });
+    </script>
+</body>
+</html>

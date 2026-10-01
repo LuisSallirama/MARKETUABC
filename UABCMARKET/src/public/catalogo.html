@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo - UABC Marketplace</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; }
+        .navbar { display: flex; justify-content: space-between; align-items: center; max-width: 1100px; margin: 0 auto 20px auto; }
+        .header { text-align: center; color: #00723f; margin-bottom: 30px; }
+        .grid-productos { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; max-width: 1100px; margin: auto; }
+        .card-producto { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-top: 4px solid #00723f; }
+        .precio { color: #00723f; font-size: 1.2rem; font-weight: bold; margin: 10px 0; }
+        .punto { font-size: 0.9rem; color: #555; background: #e8f5e9; padding: 5px; border-radius: 4px; display: inline-block; }
+        .btn-comprar { width: 100%; margin-top: 15px; padding: 10px; background: #00723f; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-comprar:hover { background: #00562f; }
+        .user-info { font-weight: bold; color: #333; }
+        .btn-logout { background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-left: 10px; }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="user-info" id="datosUsuario">Cargando usuario...</div>
+        <div>
+            <a href="/publicar.html" style="color: #00723f; font-weight: bold; text-decoration: none; margin-right: 15px;">+ Vender Producto</a>
+            <button class="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button>
+        </div>
+    </div>
+
+    <div class="header">
+        <h1>Catálogo UABC Marketplace</h1>
+        <p>Explora los artículos disponibles en el campus</p>
+    </div>
+
+    <div class="grid-productos" id="contenedorProductos"></div>
+
+    <script>
+        // Obtener la sesión activa desde localStorage
+        const usuarioSesion = JSON.parse(localStorage.getItem('usuarioUABC'));
+
+        // Redirigir a Login si no hay sesión activa
+        if (!usuarioSesion) {
+            window.location.href = '/login.html';
+        } else {
+            document.getElementById('datosUsuario').innerText = `👤 Hola, ${usuarioSesion.nombre}`;
+        }
+
+        function cerrarSesion() {
+            localStorage.removeItem('usuarioUABC');
+            window.location.href = '/login.html';
+        }
+
+        async function cargarCatalogo() {
+            const res = await fetch('/api/productos/catalogo');
+            const productos = await res.json();
+            const contenedor = document.getElementById('contenedorProductos');
+            contenedor.innerHTML = '';
+
+            if (productos.length === 0) {
+                contenedor.innerHTML = '<p>No hay productos disponibles por el momento.</p>';
+                return;
+            }
+
+            productos.forEach(prod => {
+                contenedor.innerHTML += `
+                    <div class="card-producto">
+                        <h3>${prod.titulo}</h3>
+                        <p>${prod.descripcion || 'Sin descripción'}</p>
+                        <div class="precio">$${prod.precio} MXN</div>
+                        <div class="punto">📍 ${prod.punto_encuentro}</div>
+                        <p><small>Vendedor: ${prod.vendedor}</small></p>
+                        <button class="btn-comprar" onclick="solicitarCompra(${prod.id}, ${prod.vendedor_id || 1})">Solicitar Compra</button>
+                    </div>
+                `;
+            });
+        }
+
+        async function solicitarCompra(productoId, vendedorId) {
+            // Se utiliza el id real del comprador logueado
+            const datos = { 
+                producto_id: productoId, 
+                comprador_id: usuarioSesion.id, 
+                vendedor_id: vendedorId 
+            };
+
+            try {
+                const res = await fetch('/api/compras/solicitar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(datos)
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    window.location.href = `/pedido.html?qr=${data.codigo_qr}`;
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error al conectar con el servidor');
+            }
+        }
+
+        cargarCatalogo();
+    </script>
+</body>
+</html>
